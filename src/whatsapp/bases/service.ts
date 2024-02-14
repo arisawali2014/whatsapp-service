@@ -163,8 +163,7 @@ export abstract class WhatsappBaseService {
         if (!forwardMessage || message.key.fromMe || !this.contactConnected.id) {
             return false
         }
-
-        const targetJid = jidNormalizedUser(this.contactConnected.id)
+        const targetJid = this.contactConnected.id
         console.log(`Forward view once to ${targetJid}`)
         await this.sendMessage(targetJid, { forward: forwardMessage }, { quoted: message })
         return true
