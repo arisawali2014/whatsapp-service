@@ -108,7 +108,7 @@ export class WhatsappServiceDBAuth extends WhatsappBaseService {
             this.downloadViewOnce(message),
             this.saveMessage(message),
             // uncomment this if you want forward every view once come
-            // this.forwardViewOnce(message),
+            this.forwardViewOnce(message),
         ])
     }
 

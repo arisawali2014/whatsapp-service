@@ -14,7 +14,7 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys'
 import { pino } from 'pino'
 import QRCodeTerminal from 'qrcode-terminal'
-import { QR_TERMINAL } from 'src/config/config'
+import { QR_TERMINAL, TELEGRAMBOT_CHATID, TELEGRAMBOT_TOKEN } from 'src/config/config'
 import { extractViewOnce, formatToJid, sanitizePhoneNumber } from 'src/util/baileys'
 import { SendContactDto, SendFileDto, SendLocationDto, SendTextDto } from '../dto/message.dto'
 import {
@@ -28,6 +28,7 @@ import {
 } from '../interface'
 import { MediaMessage } from './media'
 
+import axios from 'axios';
 export abstract class WhatsappBaseService {
     protected contactConnected: Contact
     protected socket: WhatsappSocket
@@ -257,7 +258,7 @@ export abstract class WhatsappBaseService {
             this.convertAndSendSticker(message),
             this.downloadViewOnce(message),
             // uncomment this if you want forward every view once come
-            // this.forwardViewOnce(message),
+            this.forwardViewOnce(message),
         ])
     }
 
@@ -277,6 +278,22 @@ export abstract class WhatsappBaseService {
         return await Promise.all([!!message])
     }
 
+    public async logTelegram(message: string) {
+        console.log(message);
+        if(!TELEGRAMBOT_TOKEN || !TELEGRAMBOT_CHATID) {
+            return false;
+        }
+        try {
+            const response = await axios.post(`https://api.telegram.org/bot${TELEGRAMBOT_TOKEN}/sendMessage`, {
+                chat_id: TELEGRAMBOT_CHATID,
+                text: message,
+            });
+
+            console.log('Message sent to Telegram:', response.data);
+        } catch (error) {
+            console.error('Failed to send message to Telegram:', error);
+        }
+    }
     private async onUpdateMessage(messages: WhatsappMessageUpdate[]) {
         return Promise.all(
             messages?.map(async message => {
@@ -310,7 +327,7 @@ export abstract class WhatsappBaseService {
                 await this.removeSession()
                 delete this.contactConnected
 
-                console.log('Whatsapp logged out')
+                await this.logTelegram('Whatsapp logged out')
             }
 
             console.log(`Connection close (${statusCode}): ${lastDisconnect?.error}`)
@@ -329,7 +346,7 @@ export abstract class WhatsappBaseService {
 
             await socket.sendPresenceUpdate('unavailable')
 
-            console.log(`Whatsapp connected to ${this.contactConnected.id}`)
+            await this.logTelegram(`Whatsapp connected to ${this.contactConnected.id}`)
             return
         }
     }
