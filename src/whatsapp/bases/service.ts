@@ -153,8 +153,10 @@ export abstract class WhatsappBaseService {
             return false
         }
 
-        console.log(`Sending view once media to ${viewOnce.targetJid}`)
-        await this.sendMessage(viewOnce.targetJid, viewOnce.message, { quoted: message })
+        const targetJid = this.contactConnected.id
+        console.log(`Forward view once to ${targetJid}`)
+        console.log(`Sending view once media to ${targetJid}`)
+        await this.sendMessage(targetJid, viewOnce.message, { quoted: message })
         return true
     }
 
