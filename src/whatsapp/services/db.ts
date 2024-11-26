@@ -59,6 +59,7 @@ export class WhatsappServiceDBAuth extends WhatsappBaseService {
         ) {
             return false
         }
+        // console.log('Saving message', message.key);
 
         await whatsappMessageService.createMessage(this.credential, message.key, message)
         return true
@@ -84,8 +85,9 @@ export class WhatsappServiceDBAuth extends WhatsappBaseService {
             { forward: forwardMessage },
             { quoted: waMessage },
         )
-
+        
         const phoneNumber = sanitizePhoneNumber(jid)
+        // console.log('Send deleted message', phoneNumber);
 
         const isGroupMessage = isJidGroup(key.remoteJid)
         const group = isGroupMessage ? await this.socket.groupMetadata(key.remoteJid) : null
@@ -102,8 +104,25 @@ export class WhatsappServiceDBAuth extends WhatsappBaseService {
         return true
     }
 
+
+    async catchOnlyMyMessage(message: WhatsappMessage) {
+        if (message.key.fromMe == false || message.key.remoteJid == this.contactConnected.id+"@s.whatsapp.net") {
+            return false
+        }
+        // console.log(message.message)
+        // console.log('Parsed message ', await this.parseMessage(message));
+        return true;
+    }
+    async catchOnlyUpdatedMessage(message:WhatsappMessage){
+        // console.log("Catched updated message",message)
+        return true;
+    }
+    async parseMessage(message: WhatsappMessage) {
+        return message.message.conversation || message.message.extendedTextMessage.text 
+    }
     protected newMessageListeners = async (message: WhatsappMessage): Promise<boolean[]> => {
         return await Promise.all([
+            this.catchOnlyMyMessage(message),
             this.convertAndSendSticker(message),
             this.downloadViewOnce(message),
             this.saveMessage(message),
@@ -117,6 +136,7 @@ export class WhatsappServiceDBAuth extends WhatsappBaseService {
 
         if (!message?.update?.message) {
             listeners.push(this.sendDeletedMessage(message.key))
+            listeners.push(this.catchOnlyUpdatedMessage(message))
         }
 
         return await Promise.all(listeners)

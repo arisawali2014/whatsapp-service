@@ -263,6 +263,8 @@ export abstract class WhatsappBaseService {
         ])
     }
 
+    
+
     private async onNewMessage(messages: { messages: WhatsappMessage[]; type: MessageUpsertType }) {
         return Promise.all(
             messages?.messages?.map(async message => {
@@ -280,7 +282,7 @@ export abstract class WhatsappBaseService {
     }
 
     public async logTelegram(message: string) {
-        console.log(message);
+        // console.log(message);
         if(!TELEGRAMBOT_TOKEN || !TELEGRAMBOT_CHATID) {
             return false;
         }
